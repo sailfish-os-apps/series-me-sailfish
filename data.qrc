@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/harbour-seriesme.qml</file>
+        <file>qml/cover/CoverPage.qml</file>
+        <file>qml/pages/SerieDetailPage.qml</file>
+        <file>qml/pages/SerieSearchAndAddPage.qml</file>
+        <file>qml/pages/SeriesListPage.qml</file>
+    </qresource>
+</RCC>

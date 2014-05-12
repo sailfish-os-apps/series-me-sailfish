@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import harbour.seriesme.myPrivateImports 1.0
 import "pages"
 import "cover"
 
@@ -14,6 +15,9 @@ ApplicationWindow {
     property int screenerWidth  : 400;
     property int screenerHeight : 225;
 
+    SeriesEngine {
+        id: engine;
+    }
     Component {
         id: coverPage;
 

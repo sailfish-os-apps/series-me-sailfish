@@ -12,9 +12,39 @@
 # The name of your application
 TARGET = harbour-seriesme
 
+MOC_DIR      = _moc
+OBJECTS_DIR  = _obj
+RCC_DIR      = _rcc
+
+QT += core gui qml quick sql
+
 CONFIG += sailfishapp
 
-SOURCES += src/harbour-seriesme.cpp
+INCLUDEPATH += src/libQtQmlTricks
+
+SOURCES += src/harbour-seriesme.cpp \
+    src/SeriesWorker.cpp \
+    src/SeriesEngine.cpp \
+    src/SeriesItem.cpp \
+    src/SeriesSeason.cpp \
+    src/SeriesEpisode.cpp \
+    src/libQtQmlTricks/qqmlvariantlistmodel.cpp \
+    src/libQtQmlTricks/qqmlobjectlistmodel.cpp \
+    src/libQtQmlTricks/qqmlhelpers.cpp
+
+HEADERS += \
+    src/SeriesWorker.h \
+    src/SeriesEngine.h \
+    src/SeriesItem.h \
+    src/SeriesSeason.h \
+    src/SeriesEpisode.h \
+    src/libQtQmlTricks/qqmlvariantlistmodel_p.h \
+    src/libQtQmlTricks/qqmlvariantlistmodel.h \
+    src/libQtQmlTricks/qqmlobjectlistmodel_p.h \
+    src/libQtQmlTricks/qqmlobjectlistmodel.h \
+    src/libQtQmlTricks/qqmlmodels.h \
+    src/libQtQmlTricks/qqmlhelpers.h
+
 
 OTHER_FILES += qml/harbour-seriesme.qml \
     qml/cover/CoverPage.qml \
@@ -31,4 +61,8 @@ OTHER_FILES += qml/harbour-seriesme.qml \
 # following CONFIG line
 CONFIG += sailfishapp_i18n
 TRANSLATIONS +=
+
+RESOURCES += \
+    data.qrc
+
 

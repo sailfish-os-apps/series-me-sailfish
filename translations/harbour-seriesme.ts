@@ -59,7 +59,11 @@
 <context>
     <name>SerieSearchAndAddPage</name>
     <message>
-        <source>Nested Page</source>
+        <source>%1 results</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a new serie</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
