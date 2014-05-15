@@ -4,13 +4,9 @@ import Sailfish.Silica 1.0
 Page {
     id: page;
 
-    property int    currentSeasonIdx : -1;
-    property string imgPrefix        : "";
-    property string imgSuffix        : "";
-
     SilicaListView {
         id: view;
-        model: (currentSeasonIdx > -1 ? 25 : 0);
+        model: engine.episodesModel;
         header: Column {
             id: layout;
             width: view.width;
@@ -18,7 +14,7 @@ Page {
 
             PageHeader {
                 id: pageTitle;
-                title: qsTr ("{{ Serie title }}"); // TODO
+                title: (currentSerieItem ? currentSerieItem.title : "");
             }
             Item {
                 id: containerSeasons;
@@ -35,7 +31,7 @@ Page {
                 }
                 SilicaListView {
                     id: viewSeasons;
-                    model: 10;
+                    model: engine.seasonsModel;
                     spacing: Theme.paddingMedium;
                     orientation: ListView.Horizontal;
                     header: Item { width: viewSeasons.spacing; }
@@ -48,17 +44,17 @@ Page {
                             bottom: parent.bottom;
                             margins: Theme.paddingMedium;
                         }
-                        onClicked: { currentSeasonIdx = model.index; }
+                        onClicked: { currentSeasonIdx = model.seasonNumber; }
 
                         Image {
-                            source: "http://slurm.trakt.us/images/seasons/%1-%2.%3.jpg".arg (imgPrefix).arg (model.index).arg (imgSuffix);
+                            source: model.poster;
                             opacity: (parent.pressed ? 0.65 : 1.0);
                             anchors.fill: parent;
                         }
                         Label {
-                            text: (model.index ? qsTr ("S.%1%2").arg (model.index < 10 ? "0" : "").arg (model.index) : qsTr ("Specials"));
-                            color: Theme [model.index === currentSeasonIdx ? "highlightColor" : "secondaryHighlightColor"];
-                            font.pixelSize: Theme [model.index === currentSeasonIdx ? "fontSizeSmall" : "fontSizeExtraSmall"];
+                            text: (model.seasonNumber ? qsTr ("S.%1%2").arg (model.seasonNumber < 10 ? "0" : "").arg (model.seasonNumber) : qsTr ("Specials"));
+                            color: Theme [model.seasonNumber === currentSeasonIdx ? "highlightColor" : "secondaryHighlightColor"];
+                            font.pixelSize: Theme [model.seasonNumber === currentSeasonIdx ? "fontSizeSmall" : "fontSizeExtraSmall"];
                             anchors {
                                 bottom: parent.top;
                                 margins: (Theme.paddingMedium + Theme.paddingSmall);
@@ -72,10 +68,12 @@ Page {
                 }
             }
             Label {
-                text: qsTr ("{{ Serie summary }}");
-                font.pixelSize: Theme.fontSizeLarge;
+                text: (currentSerieItem ? currentSerieItem.overview : "");
+                font.pixelSize: Theme.fontSizeMedium;
                 visible: (currentSeasonIdx < 0);
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
+                horizontalAlignment: Text.AlignJustify;
+                height: (contentHeight + Theme.paddingLarge);
                 anchors {
                     left: parent.left;
                     right: parent.right;
@@ -89,16 +87,14 @@ Page {
             menu: Component {
                 ContextMenu {
                     MenuLabel {
-                       text: (itemEpisode.watched ? qsTr ("Watched") : qsTr ("Not watched yet"));
+                       text: (model.watched ? qsTr ("Watched") : qsTr ("Not watched yet"));
                     }
                     MenuItem {
                         text: qsTr ("Toggle 'watched' flag");
-                        onClicked: { itemEpisode.watched = !itemEpisode.watched; }
+                        onClicked: { engine.requestToggleWatched (model.serieId, model.seasonNumber, model.episodeNumber, !model.watched); }
                     }
                 }
             }
-
-            property bool watched : (model.index < 6); // TODO
 
             Rectangle {
                 color: (model.index % 2 ? "white" : "black");
@@ -107,7 +103,7 @@ Page {
             }
             Image {
                 id: imgScreener;
-                source: "http://slurm.trakt.us/images/episodes/%1-%2-%3.%4.jpg".arg (imgPrefix).arg (currentSeasonIdx).arg (model.index +1).arg (imgSuffix);
+                source: model.screen;
                 width: Theme.itemSizeLarge;
                 height: (screenerHeight * width / screenerWidth);
                 anchors {
@@ -127,19 +123,31 @@ Page {
                 }
 
                 Label {
-                    text: (currentSeasonIdx ? qsTr ("<b>S%1E%2 : </b>").arg (currentSeasonIdx).arg (model.index) : qsTr ("<b>Specials : </b>")) + "{{ Episode title }}"; // TODO
+                    text: (model.seasonNumber
+                           ? qsTr ("<b>S%1E%2 : </b>").arg (model.seasonNumber).arg (model.episodeNumber)
+                           : qsTr ("<b>Specials : </b>")) + model.title;
                     color: Theme.primaryColor;
                     font.pixelSize: Theme.fontSizeSmall;
+                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
+                    anchors {
+                        left: parent.left;
+                        right: parent.right;
+                    }
                 }
                 Label {
-                    text: qsTr ("{{ Episode summary }}"); // TODO
+                    text: model.overview;
                     color: Theme.secondaryColor;
                     font.pixelSize: Theme.fontSizeExtraSmall;
+                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
+                    anchors {
+                        left: parent.left;
+                        right: parent.right;
+                    }
                 }
             }
             GlassItem {
                 color: Theme.highlightColor;
-                visible: watched;
+                visible: model.watched;
                 anchors {
                     verticalCenter: parent.verticalCenter;
                     horizontalCenter: parent.right;

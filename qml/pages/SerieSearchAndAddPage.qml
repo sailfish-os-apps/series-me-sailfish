@@ -38,11 +38,10 @@ Page {
                 right: parent.right;
             }
             onClicked: {
-                engine.requestFullSerieInfo (model ["slug"],
+                engine.requestFullSerieInfo (model ["serieId"],
                                              model ["title"],
                                              model ["overview"],
-                                             model ["banner"],
-                                             model ["tvdb_id"]);
+                                             model ["banner"]);
                 pageStack.navigateBack ();
             }
 
@@ -62,11 +61,8 @@ Page {
         }
         footer: Label {
             text: qsTr ("%1 results").arg (view.count);
+            width: view.width;
             horizontalAlignment: Text.AlignHCenter;
-            anchors {
-                left: parent.left;
-                right: parent.right;
-            }
         }
         anchors.fill: parent;
 

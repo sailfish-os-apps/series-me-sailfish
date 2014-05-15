@@ -16,16 +16,28 @@ public:
 
 signals:
     void searchResultsUpdated (QVariantList list);
-    void serieItemAdded       (QString      slug);
-    void serieItemUpdated     (QString      slug, QVariantMap values);
+    void serieItemAdded       (QString      serieId);
+    void serieItemRemoved     (QString      serieId);
+    void serieItemUpdated     (QString      serieId,   QVariantMap values);
+    void seasonItemAdded      (QString      seasonId);
+    void seasonItemUpdated    (QString      seasonId,  QVariantMap values);
+    void episodeItemAdded     (QString      episodeId);
+    void episodeItemUpdated   (QString      episodeId, QVariantMap values);
 
 public slots:
-    void initialize       ();
-    void searchForSerie   (QString name);
-    void getFullSerieInfo (QString slug, QString title, QString overview, QString banner, int tvdb_id);
+    void initialize           ();
+    void loadSeriesFromDb     ();
+    void loadSeasonsFromDb    (QString      serieId);
+    void loadEpisodesFromDb   (QString      serieId, int seasonNumber);
+    void toggleEpisodeWatched (QString      serieId, int seasonNumber, int episodeNumber, bool watched);
+    void removeSerieInfo      (QString      serieId);
+    void searchForSerie       (QString      name);
+    void getFullSerieInfo     (QString      serieId, QString title, QString overview, QString banner);
 
 private slots:
-    void onSearchReply  ();
+    void onSearchReply   ();
+    void onSeasonReply   ();
+    void onEpisodesReply ();
 
 private:
     QSqlDatabase            m_db;

@@ -13,6 +13,8 @@
 
 #include "SeriesEngine.h"
 #include "SeriesItem.h"
+#include "SeriesSeason.h"
+#include "SeriesEpisode.h"
 
 #define QML_MODULE "harbour.seriesme.myPrivateImports", 1, 0
 
@@ -22,8 +24,10 @@ int main (int argc, char * argv []) {
     qmlRegisterUncreatableType<QAbstractItemModel>    (QML_MODULE, "AbstractItemModel",  "!!!");
     qmlRegisterUncreatableType<QAbstractListModel>    (QML_MODULE, "AbstractListModel",  "!!!");
     qmlRegisterUncreatableType<QQmlObjectListModel>   (QML_MODULE, "ObjectListModel",    "!!!");
-    qmlRegisterType<SeriesEngine>                     (QML_MODULE, "SeriesEngine");
     qmlRegisterType<SeriesItem>                       (QML_MODULE, "SeriesItem");
+    qmlRegisterType<SeriesSeason>                     (QML_MODULE, "SeriesSeason");
+    qmlRegisterType<SeriesEpisode>                    (QML_MODULE, "SeriesEpisode");
+    qmlRegisterType<SeriesEngine>                     (QML_MODULE, "SeriesEngine");
     QGuiApplication * app = SailfishApp::application (argc, argv);
     if (!qgetenv ("HTTP_PROXY").isEmpty ()) {
         QString proxyStr = QString::fromLocal8Bit (qgetenv ("HTTP_PROXY")).toLower ().remove ("http://");

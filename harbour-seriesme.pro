@@ -48,14 +48,15 @@ HEADERS += \
 
 OTHER_FILES += qml/harbour-seriesme.qml \
     qml/cover/CoverPage.qml \
+    qml/pages/SerieDetailPage.qml \
+    qml/pages/SeriesListPage.qml \
+    qml/pages/SerieSearchAndAddPage.qml \
+    translations/harbour-seriesme.ts \
     rpm/harbour-seriesme.changes.in \
     rpm/harbour-seriesme.yaml \
     harbour-seriesme.desktop \
-    qml/pages/SerieDetailPage.qml \
-    qml/pages/SeriesListPage.qml \
     harbour-seriesme.png \
-    translations/harbour-seriesme.ts \
-    qml/pages/SerieSearchAndAddPage.qml
+    harbour-seriesme.svg
 
 # to disable building translations every time, comment out the
 # following CONFIG line

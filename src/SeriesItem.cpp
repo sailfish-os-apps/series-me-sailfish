@@ -2,8 +2,7 @@
 #include "SeriesItem.h"
 
 SeriesItem::SeriesItem (QObject * parent) : QObject (parent) {
-    m_tvdb_id  = -1;
-    m_slug     = QStringLiteral ("");
+    m_serieId  = QStringLiteral ("");
     m_title    = QStringLiteral ("{{ serie title }}");
     m_banner   = QStringLiteral ("");
     m_overview = QStringLiteral ("{{ serie overview }}");
@@ -17,11 +16,8 @@ SeriesItem * SeriesItem::fromQtVariant (const QVariantMap & values) {
 }
 
 void SeriesItem::updateWithQtVariant (const QVariantMap & values) {
-    if (values.contains (QStringLiteral ("tvdb_id"))) {
-        update_tvdb_id (values.value (QStringLiteral ("tvdb_id")).value<int> ());
-    }
-    if (values.contains (QStringLiteral ("slug"))) {
-        update_slug (values.value (QStringLiteral ("slug")).value<QString> ());
+    if (values.contains (QStringLiteral ("serieId"))) {
+        update_serieId (values.value (QStringLiteral ("serieId")).value<QString> ());
     }
     if (values.contains (QStringLiteral ("title"))) {
         update_title (values.value (QStringLiteral ("title")).value<QString> ());
