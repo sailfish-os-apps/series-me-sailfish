@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import "../components"
 
 Page {
     id: page;
@@ -44,11 +45,14 @@ Page {
                             bottom: parent.bottom;
                             margins: Theme.paddingMedium;
                         }
-                        onClicked: { currentSeasonIdx = model.seasonNumber; }
+                        onClicked: {
+                            currentEpisodeId = "";
+                            currentSeasonIdx = model.seasonNumber;
+                        }
 
-                        Image {
+                        CachedImage {
                             source: model.poster;
-                            opacity: (parent.pressed ? 0.65 : 1.0);
+                            opacity: (parent.pressed ? 0.85 : 1.0);
                             anchors.fill: parent;
                         }
                         Label {
@@ -83,7 +87,9 @@ Page {
         }
         delegate: ListItem {
             id: itemEpisode;
-            contentHeight: Math.max (layoutText.height, imgScreener.height) + Theme.paddingMedium * 2;
+            contentHeight: (isCurrent
+                            ? lblSummary.y + lblSummary.height + Theme.paddingMedium
+                            : imgScreener.height + Theme.paddingMedium * 2);
             menu: Component {
                 ContextMenu {
                     MenuLabel {
@@ -95,15 +101,19 @@ Page {
                     }
                 }
             }
+            onClicked: { currentEpisodeId = (currentEpisodeId !== model.episodeId ? model.episodeId : ""); }
+
+            property bool isCurrent : (model.episodeId === currentEpisodeId);
 
             Rectangle {
                 color: (model.index % 2 ? "white" : "black");
                 opacity: 0.05;
                 anchors.fill: parent;
             }
-            Image {
+            CachedImage {
                 id: imgScreener;
                 source: model.screen;
+                opacity: (itemEpisode.highlighted ? 0.85 : 1.0);
                 width: Theme.itemSizeLarge;
                 height: (screenerHeight * width / screenerWidth);
                 anchors {
@@ -112,44 +122,41 @@ Page {
                     margins: Theme.paddingMedium;
                 }
             }
-            Column {
-                id: layoutText;
+            Label {
+                text: (model.seasonNumber
+                       ? qsTr ("<b>S%1E%2 : </b>").arg (model.seasonNumber).arg (model.episodeNumber)
+                       : qsTr ("<b>Specials : </b>")) + model.title;
+                color: Theme.primaryColor;
+                font.pixelSize: Theme.fontSizeSmall;
+                wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
                 anchors {
-                    top: parent.top;
                     left: imgScreener.right;
                     right: parent.right;
-                    margins: Theme.paddingMedium;
+                    leftMargin: Theme.paddingMedium;
                     rightMargin: Theme.paddingLarge;
+                    verticalCenter: imgScreener.verticalCenter;
                 }
-
-                Label {
-                    text: (model.seasonNumber
-                           ? qsTr ("<b>S%1E%2 : </b>").arg (model.seasonNumber).arg (model.episodeNumber)
-                           : qsTr ("<b>Specials : </b>")) + model.title;
-                    color: Theme.primaryColor;
-                    font.pixelSize: Theme.fontSizeSmall;
-                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
-                    anchors {
-                        left: parent.left;
-                        right: parent.right;
-                    }
-                }
-                Label {
-                    text: model.overview;
-                    color: Theme.secondaryColor;
-                    font.pixelSize: Theme.fontSizeExtraSmall;
-                    wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
-                    anchors {
-                        left: parent.left;
-                        right: parent.right;
-                    }
+            }
+            Label {
+                id: lblSummary;
+                text: model.overview;
+                color: Theme.secondaryColor;
+                visible: isCurrent;
+                wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
+                horizontalAlignment: Text.AlignJustify;
+                font.pixelSize: Theme.fontSizeExtraSmall;
+                anchors {
+                    top: imgScreener.bottom;
+                    left: parent.left;
+                    right: parent.right;
+                    margins: Theme.paddingMedium;
                 }
             }
             GlassItem {
                 color: Theme.highlightColor;
                 visible: model.watched;
                 anchors {
-                    verticalCenter: parent.verticalCenter;
+                    verticalCenter: imgScreener.verticalCenter;
                     horizontalCenter: parent.right;
                 }
             }
@@ -159,14 +166,17 @@ Page {
         PullDownMenu {
             MenuItem {
                 text: qsTr ("Remove this serie");
+                enabled: false; // FIXME
             }
             MenuItem {
                 text: qsTr ("Update metadata");
+                enabled: false; // FIXME
             }
         }
         PushUpMenu {
             MenuItem {
                 text: qsTr ("Mark this season as watched");
+                enabled: false; // FIXME
             }
         }
         VerticalScrollDecorator { }

@@ -30,7 +30,8 @@ SOURCES += src/harbour-seriesme.cpp \
     src/SeriesEpisode.cpp \
     src/libQtQmlTricks/qqmlvariantlistmodel.cpp \
     src/libQtQmlTricks/qqmlobjectlistmodel.cpp \
-    src/libQtQmlTricks/qqmlhelpers.cpp
+    src/libQtQmlTricks/qqmlhelpers.cpp \
+    src/SeriesImageCacher.cpp
 
 HEADERS += \
     src/SeriesWorker.h \
@@ -43,7 +44,8 @@ HEADERS += \
     src/libQtQmlTricks/qqmlobjectlistmodel_p.h \
     src/libQtQmlTricks/qqmlobjectlistmodel.h \
     src/libQtQmlTricks/qqmlmodels.h \
-    src/libQtQmlTricks/qqmlhelpers.h
+    src/libQtQmlTricks/qqmlhelpers.h \
+    src/SeriesImageCacher.h
 
 
 OTHER_FILES += qml/harbour-seriesme.qml \
@@ -56,7 +58,8 @@ OTHER_FILES += qml/harbour-seriesme.qml \
     rpm/harbour-seriesme.yaml \
     harbour-seriesme.desktop \
     harbour-seriesme.png \
-    harbour-seriesme.svg
+    harbour-seriesme.svg \
+    qml/components/CachedImage.qml
 
 # to disable building translations every time, comment out the
 # following CONFIG line

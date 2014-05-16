@@ -15,6 +15,7 @@
 #include "SeriesItem.h"
 #include "SeriesSeason.h"
 #include "SeriesEpisode.h"
+#include "SeriesImageCacher.h"
 
 #define QML_MODULE "harbour.seriesme.myPrivateImports", 1, 0
 
@@ -24,6 +25,7 @@ int main (int argc, char * argv []) {
     qmlRegisterUncreatableType<QAbstractItemModel>    (QML_MODULE, "AbstractItemModel",  "!!!");
     qmlRegisterUncreatableType<QAbstractListModel>    (QML_MODULE, "AbstractListModel",  "!!!");
     qmlRegisterUncreatableType<QQmlObjectListModel>   (QML_MODULE, "ObjectListModel",    "!!!");
+    qmlRegisterType<SeriesImageCacher>                (QML_MODULE, "SeriesImageCacher");
     qmlRegisterType<SeriesItem>                       (QML_MODULE, "SeriesItem");
     qmlRegisterType<SeriesSeason>                     (QML_MODULE, "SeriesSeason");
     qmlRegisterType<SeriesEpisode>                    (QML_MODULE, "SeriesEpisode");

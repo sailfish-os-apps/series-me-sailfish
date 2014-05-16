@@ -1,5 +1,6 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
+import "../components"
 
 Page {
     id: page
@@ -49,6 +50,7 @@ Page {
             onClicked: {
                 currentSerieSlug = model.serieId;
                 currentSeasonIdx = -1;
+                currentEpisodeId = "";
                 pageStack.push (serieDetailPage, { });
             }
 
@@ -62,18 +64,11 @@ Page {
             }
 
             RemorseItem { id: remorse; }
-            Image {
+            CachedImage {
                 id: imgBanner;
                 opacity: (itemSerie.highlighted ? 0.85 : 1.0);
                 source: model.banner;
-                fillMode: Image.Stretch;
-                asynchronous: true;
                 anchors.fill: parent;
-            }
-            BusyIndicator {
-                visible: running;
-                running: (imgBanner.status !== Image.Ready);
-                anchors.centerIn: parent;
             }
         }
         anchors.fill: parent;

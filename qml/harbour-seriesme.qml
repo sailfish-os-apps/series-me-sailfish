@@ -28,6 +28,7 @@ ApplicationWindow {
 
     property int    currentSeasonIdx : -1;
     property string currentSerieSlug : "";
+    property string currentEpisodeId : "";
 
     property SeriesItem currentSerieItem : null;
 

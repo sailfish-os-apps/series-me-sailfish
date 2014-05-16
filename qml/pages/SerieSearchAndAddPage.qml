@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import Sailfish.Silica 1.0
 import harbour.seriesme.myPrivateImports 1.0
+import "../components"
 
 Page {
     id: page;
@@ -18,7 +19,7 @@ Page {
             SearchField {
                 id: inputSearch;
                 label: placeholderText;
-                placeholderText: "Search by name";
+                placeholderText: qsTr ("Search by name");
                 anchors {
                     left: parent.left;
                     right: parent.right;
@@ -47,16 +48,11 @@ Page {
 
             Image {
                 id: imgBanner;
-                opacity: (itemSerie.highlighted ? 0.85 : 1.0);
                 source: model ["banner"];
+                opacity: (itemSerie.highlighted ? 0.85 : 1.0);
                 fillMode: Image.Stretch;
                 asynchronous: true;
                 anchors.fill: parent;
-            }
-            BusyIndicator {
-                visible: running;
-                running: (imgBanner.status !== Image.Ready);
-                anchors.centerIn: parent;
             }
         }
         footer: Label {

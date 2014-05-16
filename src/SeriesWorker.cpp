@@ -22,6 +22,7 @@ void SeriesWorker::initialize () {
     QString path (QStandardPaths::writableLocation (QStandardPaths::DataLocation));
     QDir dir (QDir::homePath ());
     dir.mkpath (path);
+    dir.mkpath (QString ("%1/images").arg (path));
     m_db.setHostName (QStringLiteral ("localhost"));
     m_db.setDatabaseName (QString ("%1/series_storage.db").arg (path));
     if (m_db.open ()) {

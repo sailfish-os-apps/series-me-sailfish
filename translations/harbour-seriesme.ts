@@ -54,6 +54,10 @@
         <source>Add a new serie</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Search by name</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SeriesListPage</name>

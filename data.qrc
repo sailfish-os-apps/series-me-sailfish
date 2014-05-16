@@ -5,5 +5,6 @@
         <file>qml/pages/SerieDetailPage.qml</file>
         <file>qml/pages/SerieSearchAndAddPage.qml</file>
         <file>qml/pages/SeriesListPage.qml</file>
+        <file>qml/components/CachedImage.qml</file>
     </qresource>
 </RCC>
