@@ -6,6 +6,7 @@
 #include <QByteArray>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QDebug>
 #include <QImage>
 #include <QFile>
 #include <QUrl>
@@ -42,14 +43,19 @@ void SeriesImageCacher::onRemoteSourceChanged (QString remoteSource) {
     Q_UNUSED (remoteSource)
     if (!m_remoteSource.isEmpty ()) {
         QString localSource = SeriesCommon::getInstance ()->localFileFromRemoteUrl (m_remoteSource);
+        qDebug () << "onRemoteSourceChanged :"
+                  << "m_remoteSource=" << m_remoteSource
+                  << "localSource=" << localSource;
         QFile localFile (localSource);
         if (localFile.exists ()) {
             update_localSource (QUrl::fromLocalFile (localSource).toString ());
+            qDebug () << "file exists";
         }
         else {
             QNetworkReply * reply = SeriesCommon::getInstance ()->getNAM ()->get (QNetworkRequest (QUrl (m_remoteSource)));
             reply->setProperty ("localSource", localSource);
             connect (reply, &QNetworkReply::finished, this,  &SeriesImageCacher::onRequestFinished);
+            qDebug () << "request img";
         }
     }
     else {
@@ -62,8 +68,7 @@ void SeriesImageCacher::onRequestFinished () {
     if (reply && reply->error () == QNetworkReply::NoError) {
         QByteArray data = reply->readAll ();
         if (!data.isEmpty ()) {
-            QString remoteSource = reply->property ("localSource").toString ();
-            QString localSource  = SeriesCommon::getInstance ()->localFileFromRemoteUrl (remoteSource);
+            QString localSource  = reply->property ("localSource").toString ();
             QFile localFile (localSource);
             if (localFile.open (QIODevice::WriteOnly | QIODevice::Truncate)) {
                 localFile.write (data);
