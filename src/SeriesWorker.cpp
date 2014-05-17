@@ -26,7 +26,7 @@ void SeriesWorker::initialize () {
     m_db.setHostName (QStringLiteral ("localhost"));
     m_db.setDatabaseName (QString ("%1/series_storage.db").arg (path));
     if (m_db.open ()) {
-        qDebug ("Offline storage database opened.");
+        //qDebug ("Offline storage database opened.");
         m_db.transaction ();
         m_db.exec ("CREATE TABLE IF NOT EXISTS series ( "
                    "     slug TEXT NOT NULL DEFAULT (''), "
@@ -62,7 +62,7 @@ void SeriesWorker::initialize () {
 }
 
 void SeriesWorker::searchForSerie (QString name) {
-    qDebug () << "Searching for serie" << name << "...";
+    //qDebug () << "Searching for serie" << name << "...";
     QNetworkRequest request (QString ("%1/search/shows.json/%2/%3").arg (traktApiUrl).arg (traktApiKey).arg (name.replace (" ", "+")));
     QNetworkReply * reply = m_nam->get (request);
     connect (reply, &QNetworkReply::finished, this, &SeriesWorker::onSearchReply);
@@ -117,22 +117,29 @@ void SeriesWorker::loadSeriesFromDb () {
 
 void SeriesWorker::loadSeasonsFromDb (QString serieId) {
     QSqlQuery queryList (m_db);
-    queryList.prepare ("SELECT slug, season, poster FROM seasons WHERE slug=:slug ORDER BY season");
+    queryList.prepare ("SELECT slug, season, poster, "
+                       "    (SELECT count(*) FROM episodes WHERE seasons.season=episodes.season AND seasons.slug=episodes.slug) as episodeCount, "
+                       "    (SELECT count(*) FROM episodes WHERE seasons.season=episodes.season AND seasons.slug=episodes.slug AND episodes.watched='1') as watchedCount "
+                       "FROM seasons WHERE slug=:slug ORDER BY season");
     queryList.bindValue (":slug", serieId);
     if (queryList.exec ()) {
         QSqlRecord record          = queryList.record ();
         int fieldSerieSlug         = record.indexOf ("slug");
         int fieldSeasonNumber      = record.indexOf ("season");
-        int fieldSeriePoster       = record.indexOf ("poster");
+        int fieldSeasonPoster      = record.indexOf ("poster");
+        int fieldEpisodeCount      = record.indexOf ("episodeCount");
+        int fieldWatchedCount      = record.indexOf ("watchedCount");
         while (queryList.next ()) {
             QString serieId      = queryList.value (fieldSerieSlug).toString ();
             int seasonNumber     = queryList.value (fieldSeasonNumber).toInt ();
             QString seasonId     = QString ("%1_S%2").arg (serieId).arg (seasonNumber);
             QVariantMap values;
-            values.insert ("serieId",      serieId);
-            values.insert ("seasonNumber", seasonNumber);
-            values.insert ("seasonId",     seasonId);
-            values.insert ("poster",       queryList.value (fieldSeriePoster).toString ());
+            values.insert ("serieId",       serieId);
+            values.insert ("seasonNumber",  seasonNumber);
+            values.insert ("seasonId",      seasonId);
+            values.insert ("poster",        queryList.value (fieldSeasonPoster).toString ());
+            values.insert ("episodeCount",  queryList.value (fieldEpisodeCount).toInt ());
+            values.insert ("watchedCount",  queryList.value (fieldWatchedCount).toInt ());
             emit seasonItemAdded   (seasonId);
             emit seasonItemUpdated (seasonId, values);
         }
@@ -153,7 +160,6 @@ void SeriesWorker::loadEpisodesFromDb (QString serieId, int seasonNumber) {
         int fieldEpisodeOverview = record.indexOf ("overview");
         int fieldEpisodeScreen   = record.indexOf ("screen");
         int fieldEpisodeWatched  = record.indexOf ("watched");
-        int count = 0;
         while (queryList.next ()) {
             QString serieId      = queryList.value (fieldSerieSlug).toString ();
             int seasonNumber     = queryList.value (fieldSeasonNumber).toInt ();
@@ -170,11 +176,7 @@ void SeriesWorker::loadEpisodesFromDb (QString serieId, int seasonNumber) {
             values.insert ("watched",       queryList.value (fieldEpisodeWatched).toBool ());
             emit episodeItemAdded   (episodeId);
             emit episodeItemUpdated (episodeId, values);
-            count++;
         }
-        QVariantMap season;
-        season.insert ("episodeCount", count);
-        emit seasonItemUpdated (QString ("%1_S%2").arg (serieId).arg (seasonNumber), season);
     }
 }
 
@@ -192,6 +194,7 @@ void SeriesWorker::toggleEpisodeWatched (QString serieId, int seasonNumber, int 
     QVariantMap episode;
     episode.insert ("watched", watched);
     emit episodeItemUpdated (episodeId, episode);
+    loadSeasonsFromDb (serieId);
 }
 
 void SeriesWorker::removeSerieInfo (QString serieId) {
@@ -265,10 +268,9 @@ void SeriesWorker::onSeasonReply () {
                 QVariantMap season = value.toMap ();
 
                 int seasonNumber  = season.value ("season").toInt ();
-                int episodeCount  = season.value ("episodes").toInt ();
                 QString posterUrl = season.value ("poster").toString ();
 
-                qDebug () << "onSeasonReply : season=" << season;
+                //qDebug () << "onSeasonReply : season=" << season;
 
                 queryAdd.bindValue (":slug",   serieId);
                 queryAdd.bindValue (":season", seasonNumber);
@@ -301,9 +303,9 @@ void SeriesWorker::onEpisodesReply () {
     QNetworkReply * reply = qobject_cast<QNetworkReply *>(sender ());
     Q_ASSERT (reply);
     if (reply->error () == QNetworkReply::NoError) {
-        QString serieId = reply->property ("serieId").toString ();
+        QString serieId  = reply->property ("serieId").toString ();
         int seasonNumber = reply->property ("seasonNumber").toInt ();
-        QByteArray data = reply->readAll ();
+        QByteArray data  = reply->readAll ();
         QJsonParseError error;
         QJsonDocument json = QJsonDocument::fromJson (data, &error);
         if (!json.isNull () && json.isArray ()) {
@@ -324,7 +326,7 @@ void SeriesWorker::onEpisodesReply () {
                 QString overview      = values.value ("overview").toString ();
                 QString screen        = values.value ("screen").toString ();
 
-                qDebug () << "onEpisodesReply : episode=" << values;
+                //qDebug () << "onEpisodesReply : episode=" << values;
 
                 queryAdd.bindValue (":slug",    serieId);
                 queryAdd.bindValue (":season",  seasonNumber);

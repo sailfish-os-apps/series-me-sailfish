@@ -12,10 +12,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Remove this serie</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Update metadata</source>
         <translation type="unfinished"></translation>
     </message>
@@ -41,6 +37,10 @@
     </message>
     <message>
         <source>&lt;b&gt;Specials : &lt;/b&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Marking season %1 watched</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

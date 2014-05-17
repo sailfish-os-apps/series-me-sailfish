@@ -9,6 +9,9 @@
 #include <QQmlObjectListModel>
 
 class SeriesWorker;
+class SeriesItem;
+class SeriesSeason;
+class SeriesEpisode;
 
 class SeriesEngine : public QObject {
     Q_OBJECT
@@ -16,6 +19,12 @@ class SeriesEngine : public QObject {
     QML_CONSTANT_PROPERTY (QQmlObjectListModel *, seriesModel)
     QML_CONSTANT_PROPERTY (QQmlObjectListModel *, seasonsModel)
     QML_CONSTANT_PROPERTY (QQmlObjectListModel *, episodesModel)
+    QML_WRITABLE_PROPERTY (QString,               currentSerieId)
+    QML_WRITABLE_PROPERTY (int,                   currentSeasonNumber)
+    QML_WRITABLE_PROPERTY (int,                   currentEpisodeNumber)
+    QML_READONLY_PROPERTY (SeriesItem    *,       currentSerieObject)
+    QML_READONLY_PROPERTY (SeriesSeason  *,       currentSeasonObject)
+    QML_READONLY_PROPERTY (SeriesEpisode *,       currentEpisodeObject)
 
 public:
     explicit SeriesEngine (QObject * parent = NULL);
@@ -38,14 +47,17 @@ signals:
     void toggleWatchedRequested (QString serieId, int seasonNumber, int episodeNumber, bool watched);
 
 private slots:
-    void onSearchResultsUpdated (QVariantList list);
-    void onSerieItemAdded       (QString      serieId);
-    void onSerieItemRemoved     (QString      serieId);
-    void onSerieItemUpdated     (QString      serieId,   QVariantMap values);
-    void onSeasonItemAdded      (QString      seasonId);
-    void onSeasonItemUpdated    (QString      seasonId,  QVariantMap values);
-    void onEpisodeItemAdded     (QString      episodeId);
-    void onEpisodeItemUpdated   (QString      episodeId, QVariantMap values);
+    void onCurrentSerieIdChanged       ();
+    void onCurrentSeasonNumberChanged  ();
+    void onCurrentEpisodeNumberChanged ();
+    void onSearchResultsUpdated        (QVariantList list);
+    void onSerieItemAdded              (QString      serieId);
+    void onSerieItemRemoved            (QString      serieId);
+    void onSerieItemUpdated            (QString      serieId,   QVariantMap values);
+    void onSeasonItemAdded             (QString      seasonId);
+    void onSeasonItemUpdated           (QString      seasonId,  QVariantMap values);
+    void onEpisodeItemAdded            (QString      episodeId);
+    void onEpisodeItemUpdated          (QString      episodeId, QVariantMap values);
 
 private:
     SeriesWorker * m_worker;

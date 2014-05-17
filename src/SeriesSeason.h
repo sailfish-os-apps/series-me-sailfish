@@ -15,6 +15,7 @@ class SeriesSeason : public QObject {
     QML_READONLY_PROPERTY (QString, poster)       // url
     QML_READONLY_PROPERTY (int,     seasonNumber) // XX
     QML_READONLY_PROPERTY (int,     episodeCount) // N
+    QML_READONLY_PROPERTY (int,     watchedCount) // N
 
 public:
     explicit SeriesSeason (QObject * parent = NULL);

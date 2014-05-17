@@ -12,7 +12,8 @@ License: LPGLv2
 Sources:
 - '%{name}-%{version}.tar.bz2'
 Description: |
-  Short description of my SailfishOS Application
+  A simple app to avoid losing yourself while watching several TV series at time,
+  you can now follow each watching status in the same place.
 Configure: none
 # The qtc5 builder inserts macros to allow QtCreator to have fine
 # control over qmake/make execution

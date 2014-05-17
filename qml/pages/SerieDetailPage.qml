@@ -5,6 +5,9 @@ import "../components"
 Page {
     id: page;
 
+    RemorsePopup {
+        id: remorseMarkSeasonWatched
+    }
     SilicaListView {
         id: view;
         model: engine.episodesModel;
@@ -15,7 +18,7 @@ Page {
 
             PageHeader {
                 id: pageTitle;
-                title: (currentSerieItem ? currentSerieItem.title : "");
+                title: (engine.currentSerieObject ? engine.currentSerieObject.title : "");
             }
             Item {
                 id: containerSeasons;
@@ -43,13 +46,21 @@ Page {
                         anchors {
                             top: parent.top;
                             bottom: parent.bottom;
-                            margins: Theme.paddingMedium;
+                            topMargin: Theme.paddingMedium;
+                            bottomMargin: Theme.paddingLarge;
                         }
-                        onClicked: {
-                            currentEpisodeId = "";
-                            currentSeasonIdx = model.seasonNumber;
-                        }
+                        onClicked: { engine.currentSeasonNumber = model.seasonNumber; }
 
+                        property bool isCurrent : (model.seasonNumber === engine.currentSeasonNumber);
+
+                        GlassItem {
+                            color: Theme.highlightColor;
+                            visible: (model.watchedCount === model.episodeCount);
+                            anchors {
+                                verticalCenter: parent.bottom;
+                                horizontalCenter: parent.horizontalCenter;
+                            }
+                        }
                         CachedImage {
                             source: model.poster;
                             opacity: (parent.pressed ? 0.85 : 1.0);
@@ -57,8 +68,8 @@ Page {
                         }
                         Label {
                             text: (model.seasonNumber ? qsTr ("S.%1%2").arg (model.seasonNumber < 10 ? "0" : "").arg (model.seasonNumber) : qsTr ("Specials"));
-                            color: Theme [model.seasonNumber === currentSeasonIdx ? "highlightColor" : "secondaryHighlightColor"];
-                            font.pixelSize: Theme [model.seasonNumber === currentSeasonIdx ? "fontSizeSmall" : "fontSizeExtraSmall"];
+                            color: Theme [isCurrent ? "highlightColor" : "secondaryHighlightColor"];
+                            font.pixelSize: Theme [isCurrent ? "fontSizeSmall" : "fontSizeExtraSmall"];
                             anchors {
                                 bottom: parent.top;
                                 margins: (Theme.paddingMedium + Theme.paddingSmall);
@@ -72,9 +83,9 @@ Page {
                 }
             }
             Label {
-                text: (currentSerieItem ? currentSerieItem.overview : "");
+                text: (engine.currentSerieObject ? engine.currentSerieObject.overview : "");
                 font.pixelSize: Theme.fontSizeMedium;
-                visible: (currentSeasonIdx < 0);
+                visible: (engine.currentSeasonNumber < 0);
                 wrapMode: Text.WrapAtWordBoundaryOrAnywhere;
                 horizontalAlignment: Text.AlignJustify;
                 height: (contentHeight + Theme.paddingLarge);
@@ -93,7 +104,7 @@ Page {
             menu: Component {
                 ContextMenu {
                     MenuLabel {
-                       text: (model.watched ? qsTr ("Watched") : qsTr ("Not watched yet"));
+                        text: (model.watched ? qsTr ("Watched") : qsTr ("Not watched yet"));
                     }
                     MenuItem {
                         text: qsTr ("Toggle 'watched' flag");
@@ -101,9 +112,9 @@ Page {
                     }
                 }
             }
-            onClicked: { currentEpisodeId = (currentEpisodeId !== model.episodeId ? model.episodeId : ""); }
+            onClicked: { engine.currentEpisodeNumber = (engine.currentEpisodeNumber !== model.episodeNumber ? model.episodeNumber : -1); }
 
-            property bool isCurrent : (model.episodeId === currentEpisodeId);
+            property bool isCurrent : (model.episodeNumber === engine.currentEpisodeNumber);
 
             Rectangle {
                 color: (model.index % 2 ? "white" : "black");
@@ -165,18 +176,35 @@ Page {
 
         PullDownMenu {
             MenuItem {
-                text: qsTr ("Remove this serie");
-                enabled: false; // FIXME
-            }
-            MenuItem {
                 text: qsTr ("Update metadata");
-                enabled: false; // FIXME
+                onClicked: {
+                    if (engine.currentSerieObject) {
+                        engine.requestFullSerieInfo (engine.currentSerieObject.serieId,
+                                                     engine.currentSerieObject.title,
+                                                     engine.currentSerieObject.overview,
+                                                     engine.currentSerieObject.banner);
+                    }
+                }
             }
         }
         PushUpMenu {
             MenuItem {
                 text: qsTr ("Mark this season as watched");
-                enabled: false; // FIXME
+                onClicked: {
+                    remorseMarkSeasonWatched.execute (qsTr ("Marking season %1 watched").arg (engine.currentSeasonNumber),
+                                                      function () {
+                                                          for (var idx = 0; idx < engine.episodesModel.count; idx++) {
+                                                              var episode = engine.episodesModel.get (idx);
+                                                              if (episode) {
+                                                                  engine.requestToggleWatched (episode ['serieId'],
+                                                                                               episode ['seasonNumber'],
+                                                                                               episode ['episodeNumber'],
+                                                                                               true);
+                                                              }
+                                                          }
+                                                      },
+                                                      2000);
+                }
             }
         }
         VerticalScrollDecorator { }

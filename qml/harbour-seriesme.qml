@@ -7,17 +7,6 @@ import "cover"
 ApplicationWindow {
     cover: coverPage;
     initialPage: seriesListPage;
-    onCurrentSeasonIdxChanged: {
-        if (currentSeasonIdx >= 0) {
-            engine.requestLoadEpisodes (currentSerieSlug, currentSeasonIdx);
-        }
-    }
-    onCurrentSerieSlugChanged: {
-        if (currentSerieSlug !== "") {
-            currentSerieItem = engine.seriesModel.getByUid (currentSerieSlug);
-            engine.requestLoadSeasons (currentSerieSlug);
-        }
-    }
 
     property int coverWidth     : 400;
     property int coverHeight    : 576;
@@ -25,12 +14,6 @@ ApplicationWindow {
     property int bannerWidth    : 758;
     property int screenerWidth  : 400;
     property int screenerHeight : 225;
-
-    property int    currentSeasonIdx : -1;
-    property string currentSerieSlug : "";
-    property string currentEpisodeId : "";
-
-    property SeriesItem currentSerieItem : null;
 
     SeriesEngine {
         id: engine;

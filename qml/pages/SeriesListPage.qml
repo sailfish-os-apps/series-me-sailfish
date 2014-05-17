@@ -48,9 +48,7 @@ Page {
                 right: parent.right;
             }
             onClicked: {
-                currentSerieSlug = model.serieId;
-                currentSeasonIdx = -1;
-                currentEpisodeId = "";
+                engine.currentSerieId = model.serieId;
                 pageStack.push (serieDetailPage, { });
             }
 

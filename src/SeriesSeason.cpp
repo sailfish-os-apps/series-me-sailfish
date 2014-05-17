@@ -7,6 +7,7 @@ SeriesSeason::SeriesSeason (QObject * parent) : QObject (parent) {
     m_poster       = QStringLiteral ("");
     m_seasonNumber = -1;
     m_episodeCount = 0;
+    m_watchedCount = 0;
 }
 
 SeriesSeason * SeriesSeason::fromQtVariant (const QVariantMap & values){
@@ -30,6 +31,9 @@ void SeriesSeason::updateWithQtVariant (const QVariantMap & values) {
     }
     if (values.contains (QStringLiteral ("episodeCount"))) {
         update_episodeCount (values.value (QStringLiteral ("episodeCount")).value<int> ());
+    }
+    if (values.contains (QStringLiteral ("watchedCount"))) {
+        update_watchedCount (values.value (QStringLiteral ("watchedCount")).value<int> ());
     }
 }
 

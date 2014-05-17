@@ -33,7 +33,7 @@ Page {
         }
         delegate: ListItem {
             id: itemSerie;
-            contentHeight: (bannerHeight * width / bannerWidth);
+            contentHeight: (layout.height + layout.anchors.margins * 2);
             anchors {
                 left: parent.left;
                 right: parent.right;
@@ -46,13 +46,42 @@ Page {
                 pageStack.navigateBack ();
             }
 
-            Image {
-                id: imgBanner;
-                source: model ["banner"];
-                opacity: (itemSerie.highlighted ? 0.85 : 1.0);
-                fillMode: Image.Stretch;
-                asynchronous: true;
-                anchors.fill: parent;
+            Rectangle {
+                color: "white";
+                opacity: 0.15;
+                anchors {
+                    fill: parent;
+                    margins: Theme.paddingSmall;
+                }
+            }
+            Column {
+                id: layout;
+                anchors {
+                    top: parent.top;
+                    left: parent.left;
+                    right: parent.right;
+                    margins: Theme.paddingLarge;
+                }
+
+                Label {
+                    text: model ["title"];
+                    anchors {
+                        left: parent.left;
+                        right: parent.right;
+                    }
+                }
+                Image {
+                    id: imgBanner;
+                    source: model ["banner"];
+                    opacity: (itemSerie.highlighted ? 0.85 : 1.0);
+                    fillMode: Image.Stretch;
+                    asynchronous: true;
+                    height: (bannerHeight * width / bannerWidth);
+                    anchors {
+                        left: parent.left;
+                        right: parent.right;
+                    }
+                }
             }
         }
         footer: Label {
