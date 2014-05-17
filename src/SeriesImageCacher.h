@@ -7,18 +7,17 @@
 
 class SeriesCommon {
 public:
-    static SeriesCommon * getInstance ();
+    static   SeriesCommon * getInstance ();
+    QNetworkAccessManager * getNAM      () const;
 
-    QString localFileFromRemoteUrl (QString remoteUrl);
-
-    QNetworkAccessManager * getNAM () const;
+    QString localFileFromRemoteUrl      (QString remoteUrl);
 
 private:
     QString                 m_path;
     QNetworkAccessManager * m_nam;
 
-    static SeriesCommon * s_instance;
-    explicit SeriesCommon ();
+    static   SeriesCommon * s_instance;
+    explicit SeriesCommon   ();
 };
 
 class SeriesImageCacher : public QObject {
@@ -31,7 +30,7 @@ public:
 
 private slots:
     void onRequestFinished     ();
-    void onRemoteSourceChanged (QString remoteSource);
+    void onRemoteSourceChanged ();
 };
 
 #endif // SERIESIMAGECACHER_H

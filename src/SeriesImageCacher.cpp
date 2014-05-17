@@ -11,6 +11,8 @@
 #include <QFile>
 #include <QUrl>
 
+#define EMPTY_QSTR QStringLiteral ("")
+
 SeriesCommon * SeriesCommon::s_instance = NULL;
 SeriesCommon * SeriesCommon::getInstance () {
     if (!s_instance) {
@@ -33,49 +35,54 @@ QNetworkAccessManager * SeriesCommon::getNAM () const {
 }
 
 SeriesImageCacher::SeriesImageCacher (QObject * parent) : QObject (parent) {
-    m_localSource  = QStringLiteral ("");
-    m_remoteSource = QStringLiteral ("");
+    m_localSource  = EMPTY_QSTR;
+    m_remoteSource = EMPTY_QSTR;
     connect (this,  &SeriesImageCacher::remoteSourceChanged,
              this,  &SeriesImageCacher::onRemoteSourceChanged);
 }
 
-void SeriesImageCacher::onRemoteSourceChanged (QString remoteSource) {
-    Q_UNUSED (remoteSource)
+void SeriesImageCacher::onRemoteSourceChanged () {
     if (!m_remoteSource.isEmpty ()) {
         QString localSource = SeriesCommon::getInstance ()->localFileFromRemoteUrl (m_remoteSource);
-        qDebug () << "onRemoteSourceChanged :"
-                  << "m_remoteSource=" << m_remoteSource
-                  << "localSource=" << localSource;
         QFile localFile (localSource);
         if (localFile.exists ()) {
             update_localSource (QUrl::fromLocalFile (localSource).toString ());
-            qDebug () << "file exists";
         }
         else {
             QNetworkReply * reply = SeriesCommon::getInstance ()->getNAM ()->get (QNetworkRequest (QUrl (m_remoteSource)));
             reply->setProperty ("localSource", localSource);
             connect (reply, &QNetworkReply::finished, this,  &SeriesImageCacher::onRequestFinished);
-            qDebug () << "request img";
+            update_localSource (EMPTY_QSTR);
         }
     }
     else {
-        update_localSource (QStringLiteral (""));
+        update_localSource (EMPTY_QSTR);
     }
 }
 
 void SeriesImageCacher::onRequestFinished () {
     QNetworkReply * reply = qobject_cast<QNetworkReply *> (sender ());
-    if (reply && reply->error () == QNetworkReply::NoError) {
-        QByteArray data = reply->readAll ();
-        if (!data.isEmpty ()) {
-            QString localSource  = reply->property ("localSource").toString ();
-            QFile localFile (localSource);
-            if (localFile.open (QIODevice::WriteOnly | QIODevice::Truncate)) {
-                localFile.write (data);
-                localFile.flush ();
-                localFile.close ();
+    if (reply) {
+        if (reply->error () == QNetworkReply::NoError) {
+            QByteArray data = reply->readAll ();
+            if (!data.isEmpty ()) {
+                QString localSource  = reply->property ("localSource").toString ();
+                QFile localFile (localSource);
+                if (localFile.open  (QIODevice::WriteOnly | QIODevice::Truncate)) {
+                    localFile.write (data);
+                    localFile.flush ();
+                    localFile.close ();
+                }
+                update_localSource (QUrl::fromLocalFile (localSource).toString ());
             }
-            update_localSource (QUrl::fromLocalFile (localSource).toString ());
+            else {
+                qWarning () << "Image data empty, not cached !";
+                update_localSource (EMPTY_QSTR);
+            }
+        }
+        else {
+            qWarning () << "Image download error :" << reply->errorString ();
+            update_localSource (EMPTY_QSTR);
         }
     }
 }
