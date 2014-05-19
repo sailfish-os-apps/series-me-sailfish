@@ -32,11 +32,11 @@ int main (int argc, char * argv []) {
     qmlRegisterType<SeriesEngine>                     (QML_MODULE, "SeriesEngine");
     QGuiApplication * app = SailfishApp::application (argc, argv);
     if (!qgetenv ("HTTP_PROXY").isEmpty ()) {
-        QString proxyStr = QString::fromLocal8Bit (qgetenv ("HTTP_PROXY")).toLower ().remove ("http://");
+        QString proxyStr = QString::fromLocal8Bit (qgetenv ("HTTP_PROXY")).toLower ().remove (QStringLiteral ("http://"));
         QNetworkProxy::setApplicationProxy (QNetworkProxy (QNetworkProxy::HttpProxy, proxyStr.split (':').first (), proxyStr.split (':').last ().toInt ()));
     }
     QQuickView * view = SailfishApp::createView ();
-    view->setSource (QUrl ("qrc:/qml/harbour-seriesme.qml"));
+    view->setSource (QUrl (QStringLiteral ("qrc:/qml/harbour-seriesme.qml")));
     view->show ();
     return app->exec ();
 }

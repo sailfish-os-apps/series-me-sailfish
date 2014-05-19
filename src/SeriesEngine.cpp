@@ -134,9 +134,9 @@ void SeriesEngine::onSearchResultsUpdated (QVariantList list) {
     m_searchModel->clear ();
     foreach (QVariant variant, list) {
         QVariantMap values = variant.toMap ();
-        qDebug () << "values=" << values;
+        //qDebug () << "values=" << values;
         SeriesItem * item = SeriesItem::fromQtVariant (values);
-        qDebug () << "item="<< item->get_serieId () << item->get_title () << item->get_banner ();
+        //qDebug () << "item="<< item->get_serieId () << item->get_title () << item->get_banner ();
         m_searchModel->append (item);
     }
 }
