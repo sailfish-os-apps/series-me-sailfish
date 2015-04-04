@@ -8,12 +8,12 @@ ApplicationWindow {
     cover: coverPage;
     initialPage: seriesListPage;
 
-    property int coverWidth     : 400;
-    property int coverHeight    : 576;
-    property int bannerHeight   : 140;
-    property int bannerWidth    : 758;
-    property int screenerWidth  : 400;
-    property int screenerHeight : 225;
+    readonly property int coverWidth     : 400;
+    readonly property int coverHeight    : 576;
+    readonly property int posterHeight   : 450;
+    readonly property int posterWidth    : 300;
+    readonly property int screenerWidth  : 400;
+    readonly property int screenerHeight : 225;
 
     SeriesEngine {
         id: engine;

@@ -5,9 +5,10 @@ import "../components"
 Page {
     id: page
 
-    SilicaListView {
+    SilicaGridView {
         id: view;
-        spacing: 1;
+        cellWidth: (width / 3);
+        cellHeight: (posterHeight * cellWidth / posterWidth);
         model: engine.seriesModel;
         header: Column {
             id: column;
@@ -34,7 +35,8 @@ Page {
         }
         delegate: ListItem {
             id: itemSerie;
-            contentHeight: (bannerHeight * width / bannerWidth);
+            width: view.cellWidth;
+            contentHeight: view.cellHeight;
             menu: Component {
                 ContextMenu {
                     MenuItem {
@@ -42,10 +44,6 @@ Page {
                         onClicked: { remove (); }
                     }
                 }
-            }
-            anchors {
-                left: parent.left;
-                right: parent.right;
             }
             onClicked: {
                 engine.currentSerieId = model.serieId;

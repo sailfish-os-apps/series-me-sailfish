@@ -6,12 +6,20 @@ import "../components"
 Page {
     id: page;
 
-    SilicaListView {
+    SilicaFlickable {
         id: view;
-        model: engine.searchModel;
-        header: Column {
-            width: view.width;
+        contentHeight: (layout.height + layout.anchors.margins * 2);
+        anchors.fill: parent;
+
+        Column {
+            id: layout;
             spacing: Theme.paddingMedium;
+            anchors {
+                top: parent.top;
+                left: parent.left;
+                right: parent.right;
+                margins: Theme.paddingSmall;
+            }
 
             PageHeader {
                 title: qsTr ("Add a new serie");
@@ -28,69 +36,69 @@ Page {
                     focus = false;
                     engine.requestSearch (text);
                 }
-
             }
-        }
-        delegate: ListItem {
-            id: itemSerie;
-            contentHeight: (layout.height + layout.anchors.margins * 2);
-            anchors {
-                left: parent.left;
-                right: parent.right;
-            }
-            onClicked: {
-                engine.requestFullSerieInfo (model ["serieId"],
-                                             model ["title"],
-                                             model ["overview"],
-                                             model ["banner"]);
-                pageStack.navigateBack ();
-            }
-
-            Rectangle {
-                color: "white";
-                opacity: 0.15;
+            Grid {
+                id: grid;
+                columns: 2;
+                rowSpacing: layout.spacing;
+                columnSpacing: layout.spacing;
+                spacing: layout.spacing;
                 anchors {
-                    fill: parent;
-                    margins: Theme.paddingSmall;
-                }
-            }
-            Column {
-                id: layout;
-                anchors {
-                    top: parent.top;
                     left: parent.left;
                     right: parent.right;
-                    margins: Theme.paddingLarge;
                 }
 
-                Label {
-                    text: model ["title"];
-                    anchors {
-                        left: parent.left;
-                        right: parent.right;
-                    }
-                }
-                Image {
-                    id: imgBanner;
-                    source: model ["banner"];
-                    opacity: (itemSerie.highlighted ? 0.85 : 1.0);
-                    fillMode: Image.Stretch;
-                    asynchronous: true;
-                    height: (bannerHeight * width / bannerWidth);
-                    anchors {
-                        left: parent.left;
-                        right: parent.right;
+                readonly property real itemWidth  : ((width - (spacing * (columns -1))) / columns);
+                readonly property real itemHeight : (posterHeight * itemWidth / posterWidth);
+
+                Repeater {
+                    id: repeater;
+                    model: engine.searchModel;
+                    delegate: Image {
+                        id: imgBanner;
+                        width: grid.itemWidth;
+                        height: grid.itemHeight;
+                        source: model ["banner"];
+                        opacity: (clicker.pressed ? 0.85 : 1.0);
+                        fillMode: Image.Stretch;
+                        asynchronous: true;
+
+                        Text {
+                            z: -1;
+                            text: model ["title"];
+                            color: Theme.secondaryHighlightColor;
+                            fontSizeMode: Text.Fit;
+                            verticalAlignment: Text.AlignVCenter;
+                            horizontalAlignment: Text.AlignHCenter;
+                            font.pixelSize: Theme.fontSizeMedium;
+                            anchors {
+                                fill: parent;
+                                margins: Theme.paddingLarge;
+                            }
+                        }
+                        MouseArea {
+                            id: clicker;
+                            anchors.fill: parent;
+                            onClicked: {
+                                engine.requestFullSerieInfo (model ["serieId"],
+                                                             model ["title"],
+                                                             model ["overview"],
+                                                             model ["banner"]);
+                                pageStack.navigateBack ();
+                            }
+                        }
                     }
                 }
             }
+            Label {
+                text: qsTr ("%1 results").arg (repeater.count);
+                horizontalAlignment: Text.AlignHCenter;
+                anchors {
+                    left: parent.left;
+                    right: parent.right;
+                }
+            }
         }
-        footer: Label {
-            text: qsTr ("%1 results").arg (view.count);
-            width: view.width;
-            horizontalAlignment: Text.AlignHCenter;
-        }
-        anchors.fill: parent;
-
-        VerticalScrollDecorator {}
+        VerticalScrollDecorator { }
     }
 }

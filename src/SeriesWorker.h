@@ -5,9 +5,15 @@
 #include <QVariant>
 #include <QSqlDatabase>
 #include <QNetworkAccessManager>
+#include <QSslSocket>
+#include <QTcpServer>
 
-#define traktApiUrl QStringLiteral ("http://api.trakt.tv")
-#define traktApiKey QStringLiteral ("46f39bcb258d9684f4edf927e4c06c52")
+static const QByteArray & traktApiClientId     = QByteArrayLiteral ("86ccde896d88b8bee52c0ed37f05c1b4f47705adbc99a14543b32818001cdf55");
+static const QByteArray & traktApiClientSecret = QByteArrayLiteral ("8004d8f17b14829258bb79025c772447efe9cba611b7a938643f024d4a6038b4");
+
+class SeriesWorker;
+
+typedef void (SeriesWorker::*WorkerCallback) (void);
 
 class SeriesWorker : public QObject {
     Q_OBJECT
@@ -34,10 +40,12 @@ public slots:
     void searchForSerie       (QString      name);
     void getFullSerieInfo     (QString      serieId, QString title, QString overview, QString banner);
 
+protected:
+    void doHttpGetRequest (QString url, WorkerCallback callback, QVariantMap payload = QVariantMap ());
+
 private slots:
     void onSearchReply   ();
     void onSeasonReply   ();
-    void onEpisodesReply ();
 
 private:
     QSqlDatabase            m_db;

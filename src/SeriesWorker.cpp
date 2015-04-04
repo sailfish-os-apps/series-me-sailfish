@@ -12,6 +12,7 @@
 #include <QJsonParseError>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QStringBuilder>
 
 SeriesWorker::SeriesWorker (QObject * parent) : QObject (parent) {
     m_db  = QSqlDatabase::addDatabase (QStringLiteral ("QSQLITE"));
@@ -61,11 +62,21 @@ void SeriesWorker::initialize () {
     }
 }
 
+void SeriesWorker::doHttpGetRequest (QString url, WorkerCallback callback, QVariantMap payload) {
+    QNetworkRequest request (QString ("https://api-v2launch.trakt.tv" % url));
+    request.setHeader (QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setRawHeader ("trakt-api-version", QByteArrayLiteral ("2"));
+    request.setRawHeader ("trakt-api-key",     traktApiClientId);
+    QNetworkReply * reply = m_nam->get (request);
+    connect (reply, &QNetworkReply::finished, this, callback);
+    foreach (QString prop, payload.keys ()) {
+        reply->setProperty (prop.toLocal8Bit (), payload.value (prop));
+    }
+}
+
 void SeriesWorker::searchForSerie (QString name) {
     //qDebug () << "Searching for serie" << name << "...";
-    QNetworkRequest request (QString ("%1/search/shows.json/%2/%3").arg (traktApiUrl).arg (traktApiKey).arg (name.replace (" ", "+")));
-    QNetworkReply * reply = m_nam->get (request);
-    connect (reply, &QNetworkReply::finished, this, &SeriesWorker::onSearchReply);
+    doHttpGetRequest (QString ("/search?query=%1&type=show").arg (name.replace (" ", "+")), &SeriesWorker::onSearchReply);
 }
 
 void SeriesWorker::getFullSerieInfo (QString serieId, QString title, QString overview, QString banner) {
@@ -90,10 +101,9 @@ void SeriesWorker::getFullSerieInfo (QString serieId, QString title, QString ove
     emit serieItemAdded   (serieId);
     emit serieItemUpdated (serieId, values);
 
-    QNetworkRequest reqSeasons (QString ("%1/show/seasons.json/%2/%3").arg (traktApiUrl).arg (traktApiKey).arg (serieId));
-    QNetworkReply * replySeason = m_nam->get (reqSeasons);
-    replySeason->setProperty ("serieId", serieId);
-    connect (replySeason, &QNetworkReply::finished, this, &SeriesWorker::onSeasonReply);
+    QVariantMap payload;
+    payload.insert ("serieId", serieId);
+    doHttpGetRequest (QString ("/shows/%1/seasons?extended=episodes,full,images").arg (serieId), &SeriesWorker::onSeasonReply, payload);
 }
 
 void SeriesWorker::loadSeriesFromDb () {
@@ -230,12 +240,12 @@ void SeriesWorker::onSearchReply () {
         if (!json.isNull () && json.isArray ()) {
             QVariantList list = json.array ().toVariantList ();
             foreach (QVariant value, list) {
-                QVariantMap serie = value.toMap ();
+                QVariantMap serie = value.toMap ().value ("show").toMap ();
                 QVariantMap item;
-                item.insert (QStringLiteral ("title"),    serie.value (QStringLiteral ("title")).toString ());
-                item.insert (QStringLiteral ("banner"),   serie.value (QStringLiteral ("images")).toMap ().value (QStringLiteral ("banner")).toString ());
-                item.insert (QStringLiteral ("overview"), serie.value (QStringLiteral ("overview")).toString ());
-                item.insert (QStringLiteral ("serieId"),  serie.value (QStringLiteral ("url")).toString ().split (QChar ('/')).last ());
+                item.insert (QStringLiteral ("title"),    serie.value ("title").toString ());
+                item.insert (QStringLiteral ("overview"), serie.value ("overview").toString ());
+                item.insert (QStringLiteral ("serieId"),  serie.value ("ids").toMap ().value ("slug").toString ());
+                item.insert (QStringLiteral ("banner"),   serie.value ("images").toMap ().value ("poster").toMap ().value ("thumb").toString ());
                 ret.append (item);
             }
         }
@@ -249,8 +259,8 @@ void SeriesWorker::onSearchReply () {
     emit searchResultsUpdated (ret);
 }
 
-void SeriesWorker::onSeasonReply () {
-    QNetworkReply * reply = qobject_cast<QNetworkReply *>(sender ());
+void SeriesWorker::onSeasonReply (void) {
+    QNetworkReply * reply = qobject_cast<QNetworkReply *> (sender ());
     Q_ASSERT (reply);
     if (reply->error () == QNetworkReply::NoError) {
         QString serieId = reply->property ("serieId").toString ();
@@ -260,36 +270,61 @@ void SeriesWorker::onSeasonReply () {
         if (!json.isNull () && json.isArray ()) {
             m_db.transaction ();
 
-            QSqlQuery queryAdd (m_db);
-            queryAdd.prepare (QStringLiteral ("INSERT OR IGNORE INTO seasons (slug, season) VALUES (:slug, :season)"));
+            QSqlQuery queryAddSeason (m_db);
+            queryAddSeason.prepare (QStringLiteral ("INSERT OR IGNORE INTO seasons (slug, season) VALUES (:slug, :season)"));
 
-            QSqlQuery queryEdit (m_db);
-            queryEdit.prepare (QStringLiteral ("UPDATE seasons SET poster=:poster WHERE slug=:slug AND season=:season"));
+            QSqlQuery queryEditSeason (m_db);
+            queryEditSeason.prepare (QStringLiteral ("UPDATE seasons SET poster=:poster WHERE slug=:slug AND season=:season"));
+
+            QSqlQuery queryAddEpisode (m_db);
+            queryAddEpisode.prepare (QStringLiteral ("INSERT OR IGNORE INTO episodes (slug, season, episode) VALUES (:slug, :season, :episode)"));
+
+            QSqlQuery queryEditEpisode (m_db);
+            queryEditEpisode.prepare (QStringLiteral ("UPDATE episodes SET title=:title, overview=:overview, screen=:screen WHERE slug=:slug AND season=:season AND episode=:episode"));
 
             QVariantList list = json.array ().toVariantList ();
             foreach (QVariant value, list) {
                 QVariantMap season = value.toMap ();
 
-                int seasonNumber  = season.value (QStringLiteral ("season")).toInt ();
-                QString posterUrl = season.value (QStringLiteral ("poster")).toString ();
+                int seasonNumber  = season.value ("number").toInt ();
+                //int episodeCount  = season.value ("episode_count").toInt ();
+                QString posterUrl = season.value ("images").toMap ().value ("poster").toMap ().value ("thumb").toString ();
+                QList<QVariant> episodesList = season.value ("episodes").toList ();
 
-                //qDebug () << "onSeasonReply : season=" << season;
+                //qDebug () << serieId << "S_" << seasonNumber << posterUrl;
 
-                queryAdd.bindValue (QStringLiteral (":slug"),   serieId);
-                queryAdd.bindValue (QStringLiteral (":season"), seasonNumber);
-                queryAdd.exec ();
+                queryAddSeason.bindValue (QStringLiteral (":slug"),   serieId);
+                queryAddSeason.bindValue (QStringLiteral (":season"), seasonNumber);
+                queryAddSeason.exec ();
 
-                queryEdit.bindValue (QStringLiteral (":poster"),        posterUrl);
-                queryEdit.bindValue (QStringLiteral (":slug"),          serieId);
-                queryEdit.bindValue (QStringLiteral (":season"),        seasonNumber);
-                queryEdit.exec ();
+                queryEditSeason.bindValue (QStringLiteral (":poster"),        posterUrl);
+                queryEditSeason.bindValue (QStringLiteral (":slug"),          serieId);
+                queryEditSeason.bindValue (QStringLiteral (":season"),        seasonNumber);
+                queryEditSeason.exec ();
 
+                foreach (QVariant subvalue, episodesList) {
+                    QVariantMap episode = subvalue.toMap ();
 
-                QNetworkRequest reqEpisodes (QString ("%1/show/season.json/%2/%3/%4").arg (traktApiUrl).arg (traktApiKey).arg (serieId).arg (seasonNumber));
-                QNetworkReply * replyEpisodes = m_nam->get (reqEpisodes);
-                replyEpisodes->setProperty ("serieId",      serieId);
-                replyEpisodes->setProperty ("seasonNumber", seasonNumber);
-                connect (replyEpisodes, &QNetworkReply::finished, this, &SeriesWorker::onEpisodesReply);
+                    int     episodeNumber = episode.value ("number").toInt ();
+                    QString title         = episode.value ("title").toString ();
+                    QString overview      = episode.value ("overview").toString ();
+                    QString screen        = episode.value ("images").toMap ().value ("screenshot").toMap ().value ("thumb").toString ();
+
+                    //qDebug () << serieId << "S_" << seasonNumber << "E_" << episodeNumber << title << screen;
+
+                    queryAddEpisode.bindValue (QStringLiteral (":slug"),    serieId);
+                    queryAddEpisode.bindValue (QStringLiteral (":season"),  seasonNumber);
+                    queryAddEpisode.bindValue (QStringLiteral (":episode"), episodeNumber);
+                    queryAddEpisode.exec ();
+
+                    queryEditEpisode.bindValue (QStringLiteral (":title"),    title);
+                    queryEditEpisode.bindValue (QStringLiteral (":overview"), overview);
+                    queryEditEpisode.bindValue (QStringLiteral (":screen"),   screen);
+                    queryEditEpisode.bindValue (QStringLiteral (":slug"),     serieId);
+                    queryEditEpisode.bindValue (QStringLiteral (":season"),   seasonNumber);
+                    queryEditEpisode.bindValue (QStringLiteral (":episode"),  episodeNumber);
+                    queryEditEpisode.exec ();
+                }
             }
             m_db.commit ();
         }
@@ -299,58 +334,5 @@ void SeriesWorker::onSeasonReply () {
     }
     else {
         qWarning () << "Network error on seasons request :" << reply->errorString ();
-    }
-}
-
-void SeriesWorker::onEpisodesReply () {
-    QNetworkReply * reply = qobject_cast<QNetworkReply *>(sender ());
-    Q_ASSERT (reply);
-    if (reply->error () == QNetworkReply::NoError) {
-        QString serieId  = reply->property ("serieId").toString ();
-        int seasonNumber = reply->property ("seasonNumber").toInt ();
-        QByteArray data  = reply->readAll ();
-        QJsonParseError error;
-        QJsonDocument json = QJsonDocument::fromJson (data, &error);
-        if (!json.isNull () && json.isArray ()) {
-            m_db.transaction ();
-
-            QSqlQuery queryAdd (m_db);
-            queryAdd.prepare (QStringLiteral ("INSERT OR IGNORE INTO episodes (slug, season, episode) VALUES (:slug, :season, :episode)"));
-
-            QSqlQuery queryEdit (m_db);
-            queryEdit.prepare (QStringLiteral ("UPDATE episodes SET title=:title, overview=:overview, screen=:screen WHERE slug=:slug AND season=:season AND episode=:episode"));
-
-            QVariantList list = json.array ().toVariantList ();
-            foreach (QVariant value, list) {
-                QVariantMap values = value.toMap ();
-
-                int     episodeNumber = values.value (QStringLiteral ("episode")).toInt ();
-                QString title         = values.value (QStringLiteral ("title")).toString ();
-                QString overview      = values.value (QStringLiteral ("overview")).toString ();
-                QString screen        = values.value (QStringLiteral ("screen")).toString ();
-
-                //qDebug () << "onEpisodesReply : episode=" << values;
-
-                queryAdd.bindValue (QStringLiteral (":slug"),    serieId);
-                queryAdd.bindValue (QStringLiteral (":season"),  seasonNumber);
-                queryAdd.bindValue (QStringLiteral (":episode"), episodeNumber);
-                queryAdd.exec ();
-
-                queryEdit.bindValue (QStringLiteral (":title"),    title);
-                queryEdit.bindValue (QStringLiteral (":overview"), overview);
-                queryEdit.bindValue (QStringLiteral (":screen"),   screen);
-                queryEdit.bindValue (QStringLiteral (":slug"),     serieId);
-                queryEdit.bindValue (QStringLiteral (":season"),   seasonNumber);
-                queryEdit.bindValue (QStringLiteral (":episode"),  episodeNumber);
-                queryEdit.exec ();
-            }
-            m_db.commit ();
-        }
-        else {
-            qWarning () << "Request episodes : result is not an array !";
-        }
-    }
-    else {
-        qWarning () << "Network error on episodes request :" << reply->errorString ();
     }
 }

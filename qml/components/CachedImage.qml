@@ -14,8 +14,10 @@ Item {
     Image {
         id: img;
         source: cacher.localSource;
-        fillMode: Image.Stretch;
+        fillMode: Image.PreserveAspectFit;
         asynchronous: true;
+        verticalAlignment: Image.AlignVCenter;
+        horizontalAlignment: Image.AlignHCenter;
         anchors.fill: parent;
     }
     BusyIndicator {
